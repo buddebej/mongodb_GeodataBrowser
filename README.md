@@ -1,6 +1,7 @@
 NodeJS based webservice, using a small Leaflet Map to browse spatial data in mongodb.
+This application is just a prototype and still lacks some major features.
 
-Install dependencies:
+Install dependencies (in app folder):
 ```js
 npm install 
 ```
@@ -10,3 +11,4 @@ Start mongodb daemon:
 node index.js <Name of Database>
 ```
 
+Browse your collections and bring query results on a map.
