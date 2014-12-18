@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{title}}</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="leaflet.css" />
+    <style>
+        html,
+        body{
+            height: 100%;
+            width:100%;
+            padding: 0px;
+            margin: 0px;
+            background: #fbfbfb;
+        }
+
+        .form {
+            color:#1F1F1F;
+            font-family:Verdana,Arial,sans-serif;
+            font-size:10px;
+            border: 3px solid #f9f9f9;
+            background-color: #ffffff;
+            padding:5px;
+        }     
+
+        .textbox {
+            color:#1F1F1F;
+            font-family:Verdana,Arial,sans-serif;
+            font-size:11px;
+            padding:5px;
+        }       
+
+        #queryString{
+            width:300px;
+            height:300px;
+        }
+       
+        #container {
+           height: 100%;
+           overflow: hidden;
+        }
+
+        #sidebar {
+            width: 350px;
+            height:100%;
+            float: right;
+            border-left:2px solid #c3c3c3;
+            padding:1em;
+        }
+
+        #map {
+            width: auto;
+            height:100%;        
+            overflow: hidden;
+        }​​ 
+    </style>
+</head>
+
+<body>
+<div id="container">
+    <div id="sidebar">
+        <div class="textbox">connected to <b>{{dbName}}</b></div>
+            <form id="queryForm" action="http://127.0.0.1:3000/query" method="post">
+                <select id="queryCollection" class="form" name="queryCollection"><option value="" disabled selected>choose collection</option></select>
+                <textarea id="queryString" class="form" name="queryString">{
+            "geometry": {
+                "$nearSphere": {
+                    "$geometry": {
+                        "type": "Point",
+                        "coordinates": [
+                              12.113069622595752,
+                              54.085392317987434
+                         ]
+                    },
+                    "$minDistance": 500,
+                    "$maxDistance": 2000
+                }
+            }
+}</textarea>
+                <input id="queryMapStateZoom" type="hidden" name="queryMapStateZoom" value="{{{mapStateZoom}}}">
+                <input id="queryMapStateCenter" type="hidden" name="queryMapStateCenter" value="{{{mapStateCenter}}}">
+                <input type="submit" class="form" id="querySubmit" value="Query db and add result to map."/> 
+            </form>
+            <form id="deleteLayers" action="http://127.0.0.1:3000/deleteLayers" method="post">
+                <input type="submit" class="form" id="queryDelete" value="Delete all layers."/> 
+            </form>
+    </div>
+    <div id="map"></div>
+</div>    
+    <script src="leaflet.js"></script>
+    <script>
+    var
+        map, i,
+        dbCollectionList = [{{{dbCollectionList}}}],
+        layers = [],
+        geoData = [{{{mapLayers}}}],
+
+        // create layer list for leaflet tree
+        getLayers = function() {
+            var output = {};
+            for (i = 0; i < layers.length; i++) {
+                output[layers[i].id] = layers[i].data;
+            }
+            return output;
+        },
+
+        onEachFeature = function(feature, layer) {
+            var objCoord = '...',
+                popupContent;
+            if(feature.geometry.type=='Point')
+                objCoord = feature.geometry.coordinates;
+            popupContent = "<p>" +
+                feature.properties.id + "<br>" +
+                objCoord + "<br>" +
+                feature.properties.bezeichnung + "<br>" +
+                feature.properties.art + "</p>";
+            if (feature.properties && feature.properties.popupContent)
+                popupContent += feature.properties.popupContent;
+            layer.bindPopup(popupContent);
+        },
+
+        // geojson string to layers
+        addLayers = function(geojsonObj) {
+            if(geojsonObj.length != 0){ // if no features in query result
+                for(var j=0;j<geojsonObj.length;j++){ // go through all layers
+                    if(geojsonObj[j].features.length > 0){ // if no features in query result
+                        // specify geometry type
+                        var type = (geojsonObj[j].features[0].geometry.type);
+                        if (type.indexOf('Polygon') != -1)
+                            type = "polygon";
+                        if (type.indexOf('Point') != -1)
+                            type = "point";
+                        if (type.indexOf('Line') != -1)
+                            type = "line";
+
+                        // init and store as leaflet layers
+                        layers.push({
+                            type: type,
+                            id: type+'_'+j,
+                            data: L.geoJson(geojsonObj[j], {
+                                onEachFeature: onEachFeature,
+                                style: getStyle(type),
+                                pointToLayer: function(feature, latlng) {
+                                    return L.circleMarker(latlng, getStyle(type));
+                                }
+                            })
+                        });
+                    } 
+                }   
+            }
+        },
+
+        getStyle = function(type) {
+            baseStyle[type].fillColor = getColor();
+            return baseStyle[type];
+        },
+
+        baseStyle = {
+            point: {
+                radius: 3,
+                color: "#fff",
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            },
+            polygon: {
+                color: "",
+                opacity: 1,
+                fillOpacity: 0.6
+            },
+            line: {
+                weight:1,
+                color: "black",
+                opacity: 1,
+                fillOpacity: 0.6
+            }
+        },
+
+        getColor = function() {
+            var colors = ['red',
+                'blue',
+                'cyan',
+                'magenta',
+                'darkgreen',
+                'yellow',
+                'white',
+                'lime',
+                'purple'
+            ];
+            return colors[layers.length];
+        },
+
+        initControls = function(){
+            var 
+                queryForm = document.getElementById("queryForm"),
+                queryCollection = document.getElementById("queryCollection"),
+                queryMapStateZoom = document.getElementById("queryMapStateZoom"),     
+                queryMapStateCenter = document.getElementById("queryMapStateCenter"),               
+                queryString = document.getElementById("queryString");
+
+            // save current map zoom and center for page reload
+            querySubmit.onclick = function(){
+                queryMapStateZoom.value = map.getZoom();
+                queryMapStateCenter.value = map.getCenter().lat+','+map.getCenter().lng;
+            };
+
+            // populate selectbox with available collections
+            for (var n = 0; n < dbCollectionList.length; n++) {
+                var listElement = document.createElement("option");
+                listElement.text = dbCollectionList[n];
+                if(listElement.text==="{{{dbCollection}}}")
+                    listElement.setAttribute('selected', true);
+                queryCollection.add(listElement);
+            }
+        },
+
+        baseMaps = {
+            "mapbox": L.tileLayer('https://{s}.tiles.mapbox.com/v3/{id}/{z}/{x}/{y}.png', {
+                maxZoom: 18,
+                id: 'examples.map-i875mjb7'
+            }),
+        };
+
+    // parse geojson array 
+    addLayers(geoData);
+
+    map = L.map('map', {
+        center: [{{{mapStateCenter}}}],
+        zoom: {{{mapStateZoom}}},
+        layers: function() {
+            var list = [];
+            list.push(baseMaps.mapbox);
+            for (var n = 0; n < layers.length; n++) {
+                list.push(layers[n].data);
+            }
+            return list;
+        }()
+    });
+
+    L.control.layers(baseMaps, getLayers(), {
+        collapsed: false
+    }).addTo(map);
+
+    initControls();
+    </script>
+</body>
+
+</html>

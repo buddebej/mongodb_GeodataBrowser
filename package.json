@@ -1,0 +1,22 @@
+{
+  "name": "mongodb2geojson",
+  "version": "1.0.0",
+  "description": "mongodb_GeodataBrowser",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/buddbej/mongodb_GeodataBrowser.git"
+  },
+  "dependencies": {
+    "mongodb": "~2.0",
+    "mustache": "~0.8.2",
+    "express": "~4.10.6",
+    "body-parser": "~1.10.0"
+  },
+  "author": "Christian Kvalheim",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/buddebej/mongodb_GeodataBrowser/issues"
+  },
+  "homepage": "https://github.com/buddebej/mongodb_GeodataBrowser"
+}
