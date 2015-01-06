@@ -19,4 +19,4 @@ http://127.0.0.1:3000/
 
 Browse your collections and bring query results on a map.
 
-![Screenshots](https://raw.github.com/buddebej/ol3-dem/master/screenshots/gui_screenshot.png) 
+![Screenshots](https://raw.github.com/buddebej/mongodb_GeodataBrowser/master/screenshots/gui_screenshot.png) 
