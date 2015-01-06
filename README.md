@@ -2,7 +2,7 @@ NodeJS based webservice, using a small Leaflet Map to browse spatial data in mon
 
 This application is just a prototype and still lacks some major features.
 
-Install dependencies (in app folder):
+Clone repo, cd to the repo dir, install nodejs dependencies using npm:
 ```js
 npm install 
 ```
@@ -17,6 +17,6 @@ Open gui in your webbrowser:
 http://127.0.0.1:3000/
 ```
 
-Browse your collections and bring query results on a map.
+Browse your collections and plot your query results on a map.
 
 ![Screenshots](https://raw.github.com/buddebej/mongodb_GeodataBrowser/master/screenshots/gui_screenshot.png) 
