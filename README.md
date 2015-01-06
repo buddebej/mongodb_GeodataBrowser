@@ -9,7 +9,14 @@ npm install
 
 Start mongodb daemon and run the application:
 ```js
-node index.js <Name of Database>
+node index.js <Database Host> <Name of Database>
+```
+
+Open gui in your webbrowser:
+```
+http://127.0.0.1:3000/
 ```
 
 Browse your collections and bring query results on a map.
+
+![Screenshots](https://raw.github.com/buddebej/ol3-dem/master/screenshots/gui_screenshot.png) 

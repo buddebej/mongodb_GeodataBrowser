@@ -8,8 +8,9 @@ var
 
     // database settings
     database = {
-        host: 'mongodb://localhost:27017/',
-        name: ''
+        host: 'localhost:27017',
+        name: '',
+        connect: function(){return 'mongodb://' + database.host + '/' + database.name;}
     },
 
     dbCollection,
@@ -29,7 +30,7 @@ var
     updateViewer = function(db, res) {
         queryDB(db, function(docs) {
             var templateData = {
-                dbName: database.host + database.name,
+                dbName: database.connect(),
                 dbObjects: getGeoJson(docs),
                 dbCollectionList: dbCollectionList,
                 dbCollection: dbCollection,
@@ -87,30 +88,40 @@ var
         collection.find(dbQuery).toArray(function(err, docs) {
             callback(docs);
         });
+    },
+
+    helpText = function(){
+            console.error("\n\nAn error occured!\nPlease provide database host and port (first argument) and the name of the database (second argument).\nExample: node index.js localhost:27017 mydb\nExample: node index.js usr:pwd@localhost:27017 mydb");
     };
 
-
 // check for db name in execution arguments
-if (process.argv[2] === undefined) {
+if (process.argv[2] === undefined || process.argv[3] === undefined) {
+    helpText();
     process.exit(1);
 } else {
-    database.name = process.argv[2];
-
+    database.host= process.argv[2];
+    database.name = process.argv[3];
+  
     // connect to db
-    MongoClient.connect(database.host + database.name, function(err, db) {
-        console.log("Database connection established.\nDatabase: " + database.name+"\n");
+    MongoClient.connect(database.connect(), function(err, db) {
+        if(err !== null){
+            helpText();
+            process.exit(1);
+        }else{
+            console.log("Database connection established with "+database.host+".\nDatabase: " + database.name+"\n");
 
-        // read all available collections
-        db.collections(function(err, collections) {
-            for (var m = 0; m < collections.length; m++)
-                if (collections[m].s.name != "system.indexes")
-                    dbCollectionList.push("'" + collections[m].s.name + "'");
-            if (dbCollection === undefined)
-                dbCollection = dbCollectionList[0];
-        });
+            // read all available collections
+            db.collections(function(err, collections) {
+                for (var m = 0; m < collections.length; m++)
+                    if (collections[m].s.name != "system.indexes")
+                        dbCollectionList.push("'" + collections[m].s.name + "'");
+                if (dbCollection === undefined)
+                    dbCollection = dbCollectionList[0];
+            });
 
-        // launch webserver
-        startServer(db);
+            // launch webserver
+            startServer(db);
+        }
     });
 
 }
